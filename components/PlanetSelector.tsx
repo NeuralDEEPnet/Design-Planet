@@ -27,6 +27,8 @@ const AgentButtonIcon: React.FC<{agent: Agent, isSelected: boolean}> = ({agent, 
             return <IconWrapper isSelected={isSelected}><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" className="w-full h-full"><path d="M50 150 C 20 100, 100 20, 150 50 S 180 100, 150 150 Z" fill="currentColor" /></svg></IconWrapper>
         case 'ui-ux-universe':
             return <IconWrapper isSelected={isSelected}><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" className="w-full h-full"><rect x="30" y="50" width="140" height="100" rx="10" fill="currentColor" /><line x1="30" y1="75" x2="170" y2="75" stroke="#1e293b" strokeWidth="10" /></svg></IconWrapper>
+        case 'image-segmentation':
+            return <IconWrapper isSelected={isSelected}><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" className="w-full h-full"><path d="M30 70 L100 170 L170 70 Z" fill="currentColor" opacity="0.6"/><path d="M30 130 L100 30 L170 130 Z" fill="currentColor" /></svg></IconWrapper>
         default:
             return null;
     }

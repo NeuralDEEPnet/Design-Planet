@@ -4,6 +4,7 @@ import { PlanetIcon } from '../components/icons/PlanetIcon';
 import { LogoIcon } from '../components/icons/LogoIcon';
 import { IllustrationIcon } from '../components/icons/IllustrationIcon';
 import { UIIcon } from '../components/icons/UIIcon';
+import { SegmentationIcon } from '../components/icons/SegmentationIcon';
 
 const creativeDirectorInstruction = `You are a world-class Creative Director AI. You have been given a design brief with five key areas: Task, Inspiration, Audience, Quality, and Budget.
 Your job is to synthesize this information into a single, highly-detailed, and masterful prompt for an AI image generation model.
@@ -71,6 +72,21 @@ export const agents: Agent[] = [
       audience: "Who are the target users for this interface?",
       quality: "What should the look and feel be? (e.g., 'clean and minimalist', 'dark mode', 'neumorphic', 'data-heavy')",
       budget: "What is the fidelity of this mockup? (e.g., 'low-fidelity wireframe', 'high-fidelity visual concept')",
+    }
+  },
+  {
+    id: 'image-segmentation',
+    name: 'Segmentation Station',
+    description: 'A specialist for editing images. Select an image and provide instructions to add, remove, or modify parts of it.',
+    systemInstruction: "You are an AI image editing assistant. The user will provide an image and a text prompt. Your job is to fulfill the user's edit request on the provided image and output the result. You can also provide a short text response confirming the action.",
+    initialMessage: "Welcome to the Segmentation Station. Use the 'Edit' button on any image in the gallery to start an editing session.",
+    icon: SegmentationIcon,
+    questions: { // These won't be used in the same way, but are here for type consistency
+      task: "What would you like to change in the image?",
+      inspiration: "",
+      audience: "",
+      quality: "",
+      budget: "",
     }
   }
 ];

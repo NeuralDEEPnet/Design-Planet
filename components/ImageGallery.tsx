@@ -3,6 +3,7 @@ import type { Image, Agent } from '../types';
 import { ImageIcon } from './icons/ImageIcon';
 import { BookmarkIcon } from './icons/BookmarkIcon';
 import { GalleryIcon } from './icons/GalleryIcon';
+import { EditIcon } from './icons/EditIcon';
 
 interface ImageGalleryProps {
   images: Image[];
@@ -11,9 +12,10 @@ interface ImageGalleryProps {
   agent?: Agent;
   onSaveImage?: (image: Image) => void;
   savedImageIds?: Set<string>;
+  onStartEditing?: (image: Image) => void;
 }
 
-export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, agent, isLoading, galleryType, onSaveImage, savedImageIds }) => {
+export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, agent, isLoading, galleryType, onSaveImage, savedImageIds, onStartEditing }) => {
   const AgentIcon = agent?.icon;
   const hasContent = images.length > 0 || (isLoading && galleryType === 'agent');
 
@@ -56,15 +58,26 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, agent, isLoa
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <p className="text-xs text-brand-light font-sans font-normal">{image.prompt}</p>
                 </div>
-                {onSaveImage && (
-                  <button 
-                    onClick={() => onSaveImage(image)}
-                    aria-label={isSaved ? 'Unsave image' : 'Save image'}
-                    className="absolute top-2 right-2 p-2 bg-black/40 rounded-full text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 hover:bg-brand-accent focus:opacity-100 transition-all duration-300"
-                  >
-                    <BookmarkIcon filled={isSaved} />
-                  </button>
-                )}
+                <div className="absolute top-2 right-2 flex flex-col gap-2">
+                  {onSaveImage && (
+                    <button 
+                      onClick={() => onSaveImage(image)}
+                      aria-label={isSaved ? 'Unsave image' : 'Save image'}
+                      className="p-2 bg-black/40 rounded-full text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 hover:bg-brand-accent focus:opacity-100 transition-all duration-300"
+                    >
+                      <BookmarkIcon filled={isSaved} />
+                    </button>
+                  )}
+                   {onStartEditing && (
+                    <button 
+                      onClick={() => onStartEditing(image)}
+                      aria-label='Edit image'
+                      className="p-2 bg-black/40 rounded-full text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 hover:bg-brand-accent focus:opacity-100 transition-all duration-300"
+                    >
+                      <EditIcon />
+                    </button>
+                  )}
+                </div>
               </div>
             )
           })}

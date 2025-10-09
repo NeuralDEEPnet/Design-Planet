@@ -13,13 +13,14 @@ interface ChatPanelProps {
   onSendMessage: (prompt: string) => void;
   onSendInspiration: (base64DataUrl: string) => void;
   currentStep: DesignStep;
+  currentAgentId: string;
   isAwaitingCollaborationChoice: boolean;
   onProceedToGeneration: () => void;
   onStartCollaboration: () => void;
 }
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({ 
-  messages, isLoading, onSendMessage, onSendInspiration, currentStep,
+  messages, isLoading, onSendMessage, onSendInspiration, currentStep, currentAgentId,
   isAwaitingCollaborationChoice, onProceedToGeneration, onStartCollaboration 
 }) => {
   const [prompt, setPrompt] = useState('');
@@ -61,7 +62,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     e.target.value = '';
   };
   
-  const isInspirationStep = currentStep === 'inspiration';
+  const isCreativeAgent = currentAgentId !== 'image-segmentation';
+  const isInspirationStep = isCreativeAgent && currentStep === 'inspiration';
+
+  const getPlaceholderText = () => {
+    if (currentAgentId === 'image-segmentation') {
+      return "Describe your edit (e.g., 'remove the background')...";
+    }
+    if (isInspirationStep) {
+      return "Describe inspiration, paste a URL, or upload an image...";
+    }
+    return "Describe your design...";
+  };
 
   return (
     <div className="bg-brand-secondary/50 backdrop-blur-sm border-t border-brand-secondary p-4 w-full max-h-[40vh] flex flex-col">
@@ -78,7 +90,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 {msg.imageUrl && (
                   <img src={msg.imageUrl} alt="User inspiration" className="max-w-xs w-full object-contain rounded-lg mb-2 border border-brand-secondary" />
                 )}
-                <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                {msg.text && <p className="text-sm whitespace-pre-wrap">{msg.text}</p>}
               </div>
                {msg.author === Author.USER && (
                 <div className="w-8 h-8 flex-shrink-0 bg-brand-light rounded-full flex items-center justify-center border border-brand-accent/50 shadow-lg">
@@ -121,7 +133,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={isInspirationStep ? "Describe inspiration, paste a URL, or upload an image..." : "Describe your design..."}
+            placeholder={getPlaceholderText()}
             className="w-full bg-brand-primary rounded-lg p-3 pr-24 text-sm text-brand-text-primary focus:ring-2 focus:ring-brand-accent focus:outline-none resize-none shadow-inner"
             rows={2}
             disabled={isLoading}
@@ -149,7 +161,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           )}
           <button
             type="submit"
-            disabled={isLoading || (!prompt.trim() && !isInspirationStep)}
+            disabled={isLoading || !prompt.trim()}
             aria-label="Send message"
             className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-accent text-white disabled:bg-brand-secondary disabled:cursor-not-allowed hover:bg-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-300 transition-all duration-200"
           >

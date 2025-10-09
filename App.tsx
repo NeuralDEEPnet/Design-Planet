@@ -1,11 +1,11 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Header } from './components/Header';
 import { ChatPanel } from './components/ChatPanel';
 import { ImageGallery } from './components/ImageGallery';
 import { CollaboratorSelectionModal } from './components/CollaboratorSelectionModal';
 import type { Message, Image, Conversations, DesignStep, ImagePart, Agent } from './types';
 import { Author } from './types';
-import { reasonAndPlan, generateImage as generateImageService, allTools } from './services/geminiService';
+import { reasonAndPlan, generateImage as generateImageService, editImage as editImageService, allTools } from './services/geminiService';
 import { agents } from './config/agents';
 import { FunctionDeclaration } from '@google/genai';
 import { WarningIcon } from './components/icons/WarningIcon';
@@ -33,7 +33,7 @@ const isValidUrl = (urlString: string) => {
 
 const getFriendlyErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
-    if (error.message.toLowerCase().includes('api key not valid')) {
+    if (error.message.toLowerCase().includes('api key')) {
       return "I'm having trouble connecting due to an API configuration issue. Please let the site administrator know.";
     }
     if (error.message.includes('429')) { // Rate limiting
@@ -52,13 +52,24 @@ const getFriendlyErrorMessage = (error: unknown): string => {
 };
 
 export default function App() {
-  const [apiKeyExists] = useState(!!process.env.API_KEY);
+  const [apiKeyExists, setApiKeyExists] = useState<boolean | null>(null);
   const [conversations, setConversations] = useState<Conversations>(initialConversations);
   const [currentAgentId, setCurrentAgentId] = useState<string>(agents[0].id);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isChoosingCollaborator, setIsChoosingCollaborator] = useState(false);
   const [savedImages, setSavedImages] = useState<Image[]>([]);
   const [currentView, setCurrentView] = useState<'agent' | 'gallery'>('agent');
+
+  useEffect(() => {
+    // Defer the check until the component mounts to ensure it runs client-side.
+    // This is a robust way to check for environment variables that might be
+    // injected at build time, without crashing on the server or in environments
+    // where `process` is not defined.
+    const keyExists = typeof process !== 'undefined' &&
+                      process.env &&
+                      !!process.env.API_KEY;
+    setApiKeyExists(keyExists);
+  }, []);
 
   const currentAgent = agents.find(agent => agent.id === currentAgentId)!;
   const currentConversation = conversations[currentAgentId];
@@ -228,6 +239,63 @@ export default function App() {
   const handleSendMessage = useCallback(async (prompt: string) => {
     if (!prompt.trim() || isLoading) return;
 
+    if (currentAgent.id === 'image-segmentation') {
+        setIsLoading(true);
+        const userMessage: Message = { author: Author.USER, text: prompt };
+        appendMessage(currentAgentId, userMessage);
+    
+        const sourceImageMsg = [...currentConversation.messages, userMessage]
+            .reverse()
+            .find(msg => msg.imageUrl);
+    
+        if (!sourceImageMsg || !sourceImageMsg.imageUrl) {
+            appendMessage(currentAgentId, { author: Author.AGENT, text: "I can't find an image to edit. Please start by using the 'Edit' button on an image in the gallery." });
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            const [meta, base64Data] = sourceImageMsg.imageUrl.split(',');
+            const mimeType = meta.split(':')[1].split(';')[0];
+            const imagePart = { inlineData: { mimeType, data: base64Data } };
+
+            const { newImageBase64, textResponse } = await editImageService(prompt, imagePart);
+    
+            if (textResponse) {
+                appendMessage(currentAgentId, { author: Author.AGENT, text: textResponse });
+            }
+    
+            if (newImageBase64) {
+                const newImage: Image = {
+                    id: crypto.randomUUID(),
+                    url: `data:image/png;base64,${newImageBase64}`,
+                    prompt: `Edit of a previous image with prompt: "${prompt}"`,
+                };
+                setConversations(prev => ({
+                    ...prev,
+                    [currentAgentId]: {
+                        ...prev[currentAgentId],
+                        images: [newImage, ...prev[currentAgentId].images],
+                    }
+                }));
+                const followUpMessage: Message = {
+                    author: Author.AGENT,
+                    text: "Here is the edited image! You can continue editing it with a new instruction, or use the 'Edit' button in the gallery to start with a different image.",
+                    imageUrl: newImage.url, // Show the new image in the chat
+                };
+                appendMessage(currentAgentId, followUpMessage);
+            } else if (!textResponse) {
+                appendMessage(currentAgentId, { author: Author.AGENT, text: "I wasn't able to edit the image based on that description. Please try rephrasing your request." });
+            }
+        } catch (error) {
+            const friendlyMessage = getFriendlyErrorMessage(error);
+            appendMessage(currentAgentId, { author: Author.AGENT, text: friendlyMessage });
+        } finally {
+            setIsLoading(false);
+        }
+        return;
+    }
+
     let userMessage: Message = { author: Author.USER, text: prompt };
     const currentStepIndex = currentConversation.currentStep;
     const currentStepKey = designSteps[currentStepIndex];
@@ -269,6 +337,29 @@ export default function App() {
     });
   }, []);
 
+  const handleStartEditing = useCallback((imageToEdit: Image) => {
+    const segmenterId = 'image-segmentation';
+    setCurrentAgentId(segmenterId);
+    
+    setConversations(prev => ({
+        ...prev,
+        [segmenterId]: {
+            ...initialConversations[segmenterId],
+            messages: [
+                { author: Author.AGENT, text: "I've loaded the image. What would you like to change?" },
+                { author: Author.USER, text: '', imageUrl: imageToEdit.url, } 
+            ],
+        }
+    }));
+
+    setCurrentView('agent');
+  }, []);
+
+  if (apiKeyExists === null) {
+    // Render a blank screen while the key is being checked to allow the server to start.
+    return <div className="h-screen bg-brand-primary" />;
+  }
+  
   if (!apiKeyExists) {
     return (
       <div className="flex flex-col h-screen bg-brand-primary text-brand-text-primary items-center justify-center p-8">
@@ -310,6 +401,7 @@ export default function App() {
               isLoading={isLoading}
               onSaveImage={handleSaveImage}
               savedImageIds={savedImageIds}
+              onStartEditing={handleStartEditing}
             />
             <ChatPanel
               messages={currentConversation.messages}
@@ -320,6 +412,7 @@ export default function App() {
               isAwaitingCollaborationChoice={currentConversation.isAwaitingCollaborationChoice}
               onProceedToGeneration={handleProceedToGeneration}
               onStartCollaboration={handleStartCollaboration}
+              currentAgentId={currentAgentId}
             />
           </>
         ) : (
@@ -329,6 +422,7 @@ export default function App() {
             isLoading={false}
             onSaveImage={handleSaveImage}
             savedImageIds={savedImageIds}
+            onStartEditing={handleStartEditing}
           />
         )}
       </main>

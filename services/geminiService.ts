@@ -1,15 +1,20 @@
-import { GoogleGenAI, GenerateContentResponse, FunctionDeclaration, Type } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, FunctionDeclaration, Type, Modality } from "@google/genai";
 import type { ImagePart } from '../types';
 
 let ai: GoogleGenAI;
 
-// Lazy initialization of the GoogleGenAI client
+// Lazy and robust initialization of the GoogleGenAI client
 const getAiClient = () => {
   if (!ai) {
-    if (!process.env.API_KEY) {
-      throw new Error("API_KEY environment variable is not set");
+    // This provides a robust way to access the API key,
+    // preventing crashes if `process` or `process.env` is not defined.
+    const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : undefined;
+
+    if (!apiKey) {
+      // This error will be caught by the calling function and displayed to the user.
+      throw new Error("API_KEY is not configured. Please set the API_KEY environment variable.");
     }
-    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    ai = new GoogleGenAI({ apiKey: apiKey });
   }
   return ai;
 };
@@ -95,6 +100,37 @@ export async function generateImage(prompt: string): Promise<string | null> {
     return null;
   } catch (error) {
     console.error("Error in Gemini image generation API call:", error);
+    throw error;
+  }
+}
+
+export async function editImage(prompt: string, imagePart: ImagePart): Promise<{ newImageBase64: string | null; textResponse: string | null; }> {
+  try {
+    const aiClient = getAiClient();
+    const response = await aiClient.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: {
+        parts: [imagePart, { text: prompt }],
+      },
+      config: {
+        responseModalities: [Modality.IMAGE, Modality.TEXT],
+      },
+    });
+
+    let newImageBase64: string | null = null;
+    let textResponse: string | null = null;
+    
+    for (const part of response.candidates[0].content.parts) {
+      if (part.text) {
+        textResponse = part.text;
+      } else if (part.inlineData) {
+        newImageBase64 = part.inlineData.data;
+      }
+    }
+    
+    return { newImageBase64, textResponse };
+  } catch (error) {
+    console.error("Error in Gemini image editing API call:", error);
     throw error;
   }
 }
