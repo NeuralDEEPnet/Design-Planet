@@ -3,61 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Design Planet</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              'brand-primary': '#1e293b',
-              'brand-secondary': '#334155',
-              'brand-accent': '#38bdf8',
-              'brand-light': '#f1f5f9',
-              'brand-text-primary': '#e2e8f0',
-              'brand-text-secondary': '#94a3b8',
-            },
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-              display: ['Orbitron', 'sans-serif'],
-            },
-          },
-        },
-      }
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-      /* Custom scrollbar for a more modern look */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #1e293b; /* brand-primary */
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #334155; /* brand-secondary */
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #475569; /* slate-600 */
-      }
-    </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.23.0",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
-  }
-}
-</script>
-</head>
-  <body class="bg-brand-primary font-sans">
+    <meta name="description" content="AIrave Studio: describe your product, and a crew of AI design agents turns it into a brand, a landing page and an SEO plan you can ship." />
+    <title>AIrave Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='60' fill='%2338bdf8'/%3E%3Cellipse cx='100' cy='100' rx='90' ry='30' fill='none' stroke='%23fde047' stroke-width='10' transform='rotate(-20 100 100)'/%3E%3C/svg%3E" />
+  </head>
+  <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

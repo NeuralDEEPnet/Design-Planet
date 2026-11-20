@@ -1,5 +1,0 @@
-{
-  "name": "Design Planet",
-  "description": "An advanced design agent with reasoning capabilities and image generation, built with React and the Gemini API. Users can describe their design needs, and the agent will interpret the request, provide feedback, and generate visual assets.",
-  "requestFramePermissions": []
-}
